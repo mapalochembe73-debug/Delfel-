@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delfel Web Developers</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080b10;
+    --surface: #0e1420;
+    --border: #1a2336;
+    --accent: #00e5ff;
+    --accent2: #7b2fff;
+    --text: #e2e8f0;
+    --muted: #5a6a82;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  /* Grid lines background */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,11,16,0.85);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+
+  .logo span { color: var(--muted); }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8rem 2rem 4rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s forwards;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.4s forwards;
+  }
+
+  .hero h1 .highlight {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.6s forwards;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.8s forwards;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.8rem;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  .btn-primary:hover {
+    background: #fff;
+    box-shadow: 0 0 30px rgba(0,229,255,0.4);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Glowing orb */
+  .orb {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .orb-1 {
+    background: radial-gradient(circle, rgba(0,229,255,0.12), transparent 70%);
+    top: 10%;
+    right: -100px;
+  }
+
+  .orb-2 {
+    background: radial-gradient(circle, rgba(123,47,255,0.1), transparent 70%);
+    bottom: 0;
+    left: -100px;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1.5rem 2rem;
+  }
+
+  .stats-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .stat-num {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 3rem;
+  }
+
+  /* SERVICES */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    background: var(--border);
+  }
+
+  .service-card {
+    background: var(--surface);
+    padding: 2rem;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .service-card:hover::before { transform: scaleX(1); }
+  .service-card:hover { background: #121a26; }
+
+  .service-icon {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .service-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+  }
+
+  .service-card p {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* WORK */
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .work-card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .work-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+  }
+
+  .work-thumb {
+    height: 180px;
+    background: linear-gradient(135deg, #0e1e30, #1a0a2e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .work-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 40%, rgba(0,229,255,0.05));
+  }
+
+  .work-thumb .thumb-label {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .work-thumb .thumb-label strong {
+    display: block;
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+
+  .work-info {
+    padding: 1.4rem;
+  }
+
+  .work-info h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .work-info p {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .work-tag {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--accent);
+    border: 1px solid rgba(0,229,255,0.3);
+    padding: 0.2rem 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* PROCESS */
+  .process-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+
+  .process-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 2rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .process-item:last-child { border-bottom: none; }
+  .process-item:hover { background: var(--surface); }
+
+  .process-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    min-width: 40px;
+    padding-top: 0.2rem;
+    letter-spacing: 0.1em;
+  }
+
+  .process-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .process-content p {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* CONTACT */
+  .contact-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .contact-info p {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  .contact-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .contact-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+
+  .contact-row .label { color: var(--muted); min-width: 80px; }
+  .contact-row .value { color: var(--text); }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-group label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.8rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    border-color: var(--accent);
+  }
+
+  .form-group select option { background: var(--bg); }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  footer .logo { font-size: 0.8rem; }
+
+  footer p {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+    nav { padding: 1rem; }
+    .nav-links { gap: 1.2rem; }
+    .contact-wrap { grid-template-columns: 1fr; gap: 2rem; }
+    .hero { padding-top: 6rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">DELFEL<span>.DEV</span></div>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <p class="hero-tag">// Zambia's Web Development Studio</p>
+  <h1>We Build<br><span class="highlight">Digital Presence</span><br>That Works.</h1>
+  <p class="hero-sub">Professional websites for local businesses, restaurants, NGOs, and enterprises. Fast delivery. Clean code. Results-focused design.</p>
+  <div class="hero-cta">
+    <a href="#contact" class="btn btn-primary">Start a Project</a>
+    <a href="#work" class="btn btn-ghost">View Our Work</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat">
+      <span class="stat-num">100%</span>
+      <span class="stat-label">Mobile First</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">Fast</span>
+      <span class="stat-label">Turnaround</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">ZMB</span>
+      <span class="stat-label">Based & Operated</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">∞</span>
+      <span class="stat-label">Revisions Until Right</span>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <p class="section-label reveal">// What We Do</p>
+  <h2 class="section-title reveal">Services</h2>
+  <div class="services-grid reveal">
+    <div class="service-card">
+      <div class="service-icon">⬛</div>
+      <h3>Landing Pages</h3>
+      <p>Single-page sites that convert visitors into customers. Built for speed, optimized for mobile.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">◈</div>
+      <h3>Business Websites</h3>
+      <p>Multi-page websites for SMEs, restaurants, and service providers. Professional and affordable.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">◎</div>
+      <h3>NGO & Nonprofit Sites</h3>
+      <p>Purpose-built websites that communicate your mission and reach donors and volunteers effectively.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">◆</div>
+      <h3>Corporate Portals</h3>
+      <p>Enterprise-grade web presence for established companies looking to build authority online.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WORK -->
+<section id="work">
+  <p class="section-label reveal">// Portfolio</p>
+  <h2 class="section-title reveal">Recent Work</h2>
+  <div class="work-grid">
+    <div class="work-card reveal">
+      <div class="work-thumb">
+        <div class="thumb-label">
+          <strong>Casablanca Gardens</strong>
+          casablancagardens.vercel.app
+        </div>
+      </div>
+      <div class="work-info">
+        <h3>Casablanca Gardens</h3>
+        <p>Landing page for a leisure & pool destination in Kitwe, Zambia. Fast, mobile-optimized, single-file HTML/CSS/JS.</p>
+        <span class="work-tag">Landing Page</span>
+      </div>
+    </div>
+    <div class="work-card reveal">
+      <div class="work-thumb" style="background: linear-gradient(135deg, #0a1a10, #0d2a1a);">
+        <div class="thumb-label">
+          <strong style="color: #00ff88;">Your Business</strong>
+          could be here
+        </div>
+      </div>
+      <div class="work-info">
+        <h3>Your Project</h3>
+        <p>We're actively taking on new clients. Restaurants, shops, NGOs, corporates — we build for all sectors.</p>
+        <span class="work-tag" style="color: #7b2fff; border-color: rgba(123,47,255,0.3);">Available</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <p class="section-label reveal">// How It Works</p>
+  <h2 class="section-title reveal">Our Process</h2>
+  <div class="process-list reveal">
+    <div class="process-item">
+      <span class="process-num">01 —</span>
+      <div class="process-content">
+        <h3>Discovery Call</h3>
+        <p>We discuss your business, goals, and target audience. We figure out exactly what you need.</p>
+      </div>
+    </div>
+    <div class="process-item">
+      <span class="process-num">02 —</span>
+      <div class="process-content">
+        <h3>Design & Build</h3>
+        <p>We design and develop your site with clean, fast code. No templates — everything is custom.</p>
+      </div>
+    </div>
+    <div class="process-item">
+      <span class="process-num">03 —</span>
+      <div class="process-content">
+        <h3>Review & Revise</h3>
+        <p>You review the work. We make changes until you're completely satisfied. No rush.</p>
+      </div>
+    </div>
+    <div class="process-item">
+      <span class="process-num">04 —</span>
+      <div class="process-content">
+        <h3>Launch</h3>
+        <p>We deploy your site live and hand over everything you need — domain, hosting, access.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <p class="section-label reveal">// Get In Touch</p>
+  <h2 class="section-title reveal">Start a Project</h2>
+  <div class="contact-wrap">
+    <div class="contact-info reveal">
+      <p>Ready to get your business online? We work with clients across Zambia and beyond. Reach out and let's talk about your project.</p>
+      <div class="contact-detail">
+        <div class="contact-row">
+          <span class="label">Location</span>
+          <span class="value">Zambia</span>
+        </div>
+        <div class="contact-row">
+          <span class="label">Email</span>
+          <span class="value">hello@delfel.dev</span>
+        </div>
+        <div class="contact-row">
+          <span class="label">Response</span>
+          <span class="value">Within 24 hours</span>
+        </div>
+      </div>
+    </div>
+    <div class="contact-form reveal">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" placeholder="John Banda">
+      </div>
+      <div class="form-group">
+        <label>Email or WhatsApp</label>
+        <input type="text" placeholder="john@example.com or +260...">
+      </div>
+      <div class="form-group">
+        <label>Business Type</label>
+        <select>
+          <option value="">Select...</option>
+          <option>Restaurant / Hospitality</option>
+          <option>Small Business</option>
+          <option>NGO / Nonprofit</option>
+          <option>Corporate</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tell Us About Your Project</label>
+        <textarea rows="4" placeholder="What do you need? Any ideas or references?"></textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%; text-align:center;">Send Message →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo">DELFEL<span>.DEV</span></div>
+  <p>© 2025 Delfel Web Developers · Zambia</p>
+  <p style="color: var(--muted);">Built with clean code.</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Smooth active nav
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 200) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current
+        ? 'var(--accent)' : '';
+    });
+  });
+</script>
+</body>
+</html>
